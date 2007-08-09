@@ -1,0 +1,6 @@
+<?php /*
+
+[ActionSettings]
+ExtensionDirectories[]=akismet
+
+*/ ?>
