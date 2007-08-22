@@ -6,35 +6,43 @@ function akismet_ContentActionHandler( &$module, &$http, &$objectID )
     $version = $object->attribute( 'current' );
     if ( $http->hasPostVariable( 'AkismetSubmitSpam' ) )
     {
-        $mainNode = $object->attribute( 'main_node' );
-        $module->redirectTo( $mainNode->attribute( 'url_alias' ) );
+        include_once( 'kernel/classes/datatypes/ezuser/ezuser.php' );
+        $user = eZUser::currentUser();
 
-        include_once( 'extension/akismet/classes/ezcontentobjectakismet.php' );
-        $infoExtractor = eZContentObjectAkismet::getInfoExtractor( $version );
-        if ( $infoExtractor )
+        $accessResult = $user->hasAccessTo( 'akismet', 'submit' );
+
+        if ( $accessResult['accessWord'] === 'yes' )
         {
-            $comment = $infoExtractor->getCommentArray();
+            $mainNode = $object->attribute( 'main_node' );
+            $module->redirectTo( $mainNode->attribute( 'url_alias' ) );
 
-            include_once( 'extension/akismet/classes/ezakismet.php' );
-            $akismet = new eZAkismet( $comment );
-
-            if ( !$akismet->errorsExist() )
+            include_once( 'extension/akismet/classes/ezcontentobjectakismet.php' );
+            $infoExtractor = eZContentObjectAkismet::getInfoExtractor( $version );
+            if ( $infoExtractor )
             {
-                $response = $akismet->submitSpam();
-                $debug = eZDebug::instance();
-                $debug->writeNotice( $response, 'Akismet web service response' );
+                $comment = $infoExtractor->getCommentArray();
+
+                include_once( 'extension/akismet/classes/ezakismet.php' );
+                $akismet = new eZAkismet( $comment );
+
+                if ( !$akismet->errorsExist() )
+                {
+                    $response = $akismet->submitSpam();
+                    $debug = eZDebug::instance();
+                    $debug->writeNotice( $response, 'Akismet web service response' );
+                }
+                else
+                {
+                   $debug = eZDebug::instance();
+                   $debug->writeWarning( 'An error has occured, unable to submit spam to Akismet.' );
+                }
+
             }
             else
             {
-               $debug = eZDebug::instance();
-               $debug->writeWarning( 'An error has occured, unable to submit spam to Akismet.' );
+                $debug = eZDebug::instance();
+                $debug->writeDebug( 'Unable to find Akismet info extractor' );
             }
-
-        }
-        else
-        {
-            $debug = eZDebug::instance();
-            $debug->writeDebug( 'Unable to find Akismet info extractor' );
         }
 
         $mainNode = $object->attribute( 'main_node' );
