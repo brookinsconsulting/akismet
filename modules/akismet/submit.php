@@ -1,13 +1,35 @@
 <?php
 
 $Module =& $Params['Module'];
+$Offset = $Params['Offset'];
+
+if ( $Offset )
+{
+    $Offset = (int) $Offset;
+}
+
+if ( !is_numeric( $Offset ) )
+{
+    $Offset = 0;
+}
+
+if ( isset( $Params['UserParameters'] ) )
+{
+    $UserParameters = $Params['UserParameters'];
+}
+else
+{
+    $UserParameters = array();
+}
+
+$viewParameters = array( 'offset' => $Offset );
+$viewParameters = array_merge( $viewParameters, $UserParameters );
 
 $limit = 20;
-$offset = 0;
 
 include_once( 'extension/akismet/classes/ezcontentobjectakismet.php' );
 
-$extractableNodes = eZContentObjectAkismet::getExtractableNodes( $limit, $offset );
+$extractableNodes = eZContentObjectAkismet::getExtractableNodes( $limit, $Offset );
 $extractableNodesCount = eZContentObjectAkismet::getExtractableNodesCount();
 
 if ( $Module->isCurrentAction( 'Submit' ) && $Module->hasActionParameter( 'ObjectIDList' ) )
@@ -51,6 +73,7 @@ if ( $Module->isCurrentAction( 'Submit' ) && $Module->hasActionParameter( 'Objec
 include_once( 'kernel/common/template.php' );
 $tpl =& templateInit();
 
+$tpl->setVariable( 'view_parameters', $viewParameters );
 $tpl->setVariable( 'nodes', $extractableNodes );
 $tpl->setVariable( 'nodes_count', $extractableNodesCount );
 $tpl->setVariable( 'limit', $limit );

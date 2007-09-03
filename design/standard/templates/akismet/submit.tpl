@@ -15,7 +15,7 @@
 </table>
 
 <div class="button-block">
-    <input type="submit" value="Report as spam" name="SpamSubmitButton" />
+    <input type="submit" class="button" value="Report as spam" name="SpamSubmitButton" />
 </div>
 
 </form>

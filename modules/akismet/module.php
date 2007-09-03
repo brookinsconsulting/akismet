@@ -6,6 +6,7 @@ $ViewList = array();
 $ViewList['submit'] = array(
     'script' => 'submit.php',
     'functions' => array( 'submit' ),
+    'unordered_params' => array( 'offset' => 'Offset' ),
     'single_post_actions' => array( 'SpamSubmitButton' => 'Submit' ),
     'post_action_parameters' => array( 'Submit' => array( 'ObjectIDList' => 'ObjectIDList' ) )
 );
