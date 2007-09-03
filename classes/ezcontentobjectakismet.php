@@ -51,6 +51,61 @@ class eZContentObjectAkismet
             return false;
         }
     }
+
+    /*!
+     \static
+     Returns an array of class identifiers for which a content object akismet
+     information extractor is available.
+    */
+    function getExtractableClassList()
+    {
+        include_once( 'lib/ezutils/classes/ezini.php' );
+        $ini = eZINI::instance( 'akismet.ini' );
+        $infoExtractors = $ini->variable( 'InformationExtractorSettings', 'ClassMap' );
+
+        return array_keys( $infoExtractors );
+    }
+
+    /*
+     \static
+     Returns an array of nodes for which a content object akismet
+     information extractor is available.
+    */
+    function getExtractableNodes( $limit = false, $offset = false )
+    {
+        $classList = eZContentObjectAkismet::getExtractableClassList();
+
+        include_once( 'kernel/classes/ezcontentobjecttreenode.php' );
+        $params = array(
+            'ClassFilterType' => 'include',
+            'ClassFilterArray' => $classList,
+            'SortBy' => array( array( 'published', false ) ),
+            'Limit' => $limit,
+            'Offset' => $offset
+        );
+
+        $nodes = eZContentObjectTreeNode::subTree( $params, 1 );
+        return $nodes;
+    }
+
+    /*
+     \static
+     Returns the number of nodes for which a content object akismet
+     information extractor is available.
+    */
+    function getExtractableNodesCount()
+    {
+        $classList = eZContentObjectAkismet::getExtractableClassList();
+
+        include_once( 'kernel/classes/ezcontentobjecttreenode.php' );
+        $params = array(
+            'ClassFilterType' => 'include',
+            'ClassFilterArray' => $classList
+        );
+
+        $nodeCount = eZContentObjectTreeNode::subTreeCount( $params, 1 );
+        return $nodeCount;
+    }
 }
 
 ?>
