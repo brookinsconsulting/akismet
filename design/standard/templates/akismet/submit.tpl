@@ -8,7 +8,7 @@
 {foreach $nodes as $node sequence array('bglight','bgdark') as $sequence}
 <tr class="{$sequence}">
     <td><input type="checkbox" name="ObjectIDList[]" value="{$node.contentobject_id}" /></td>
-    <td><a href={$node.url_alias|ezurl}>{$node.name|wash}</a></td>
+    <td><a href={$node.url_alias|ezurl}>{if $node.name|ne('')}{$node.name|wash}{else}[Untitled]{/if}</a></td>
     <td>{$node.object.published|l10n( shortdatetime )}</td>
 </tr>
 {/foreach}
