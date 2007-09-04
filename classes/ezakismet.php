@@ -15,7 +15,7 @@ class eZAkismet extends Akismet
 
         if ( $this->errorsExist() )
         {
-            $errors = $akismet->getErrors();
+            $errors = $this->getErrors();
             $debug = eZDebug::instance();
             foreach ( $errors as $error )
             {

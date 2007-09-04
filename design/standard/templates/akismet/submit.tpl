@@ -7,7 +7,7 @@
 </tr>
 {foreach $nodes as $node sequence array('bglight','bgdark') as $sequence}
 <tr class="{$sequence}">
-    <td><input type="checkbox" name="ObjectIDList[]" value="{$node.contentobject_id}" /></td>
+    <td><input type="checkbox" name="ObjectIDList[]" value="{$node.contentobject_id}" {if $object_id_list|contains($node.contentobject_id)}checked="checked"{/if} /></td>
     <td><a href={$node.url_alias|ezurl}>{if $node.name|trim|ne('')}{$node.name|wash}{else}[Untitled]{/if}</a></td>
     <td>{$node.object.published|l10n( shortdatetime )}</td>
 </tr>
@@ -16,6 +16,7 @@
 
 <div class="button-block">
     <input type="submit" class="button" value="Report as spam" name="SpamSubmitButton" />
+    <input type="submit" class="button" value="Remove" name="SpamRemoveButton" />
 </div>
 
 </form>
