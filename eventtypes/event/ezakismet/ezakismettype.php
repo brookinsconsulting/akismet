@@ -181,11 +181,13 @@ class eZAkismetType extends eZApproveType
             {
                 $this->setInformation( "we are checking approval now" );
                 eZDebugSetting::writeDebug( 'kernel-workflow-approve', $event, 'check approval' );
-                $collaborationStatus = $this->checkApproveCollaboration(  $process, $event );
-                if ( $collaborationStatus == EZ_WORKFLOW_TYPE_STATUS_ACCEPTED )
+                $workflowStatus = $this->checkApproveCollaboration(  $process, $event );
+                if ( $workflowStatus == EZ_WORKFLOW_TYPE_STATUS_ACCEPTED )
                 {
                     $this->submitHam( $object, $versionID );
                 }
+
+                return $workflowStatus;
             }
         }
         else
