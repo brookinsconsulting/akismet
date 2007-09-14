@@ -1,7 +1,7 @@
-<form action={'akismet/submit'|ezurl} method="post">
+<form action={'akismet/submit'|ezurl} method="post" name="spam">
 <table class="list" cellspacing="0">
 <tr>
-    <th></th>
+    <th class="tight"><img src={'toggle-button-16x16.gif'|ezimage} alt="{'Toggle selection'|i18n( 'design/admin/role/view' )}" onclick="ezjs_toggleCheckboxes( document.spam, 'ObjectIDList[]' ); return false;"/></th>
     <th>Name</th>
     <th>Published</th>
 </tr>
