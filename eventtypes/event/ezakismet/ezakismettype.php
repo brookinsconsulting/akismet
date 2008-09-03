@@ -2,6 +2,7 @@
 
 include_once( 'kernel/classes/collaborationhandlers/ezapprove/ezapprovecollaborationhandler.php' );
 include_once( 'kernel/classes/workflowtypes/event/ezapprove/ezapprovetype.php' );
+include_once( 'kernel/classes/ezaudit.php' );
 
 define( "EZ_WORKFLOW_TYPE_AKISMET_ID", "ezakismet" );
 
@@ -118,42 +119,8 @@ class eZAkismetType extends eZApproveType
              !$inExcludeGroups and
              $correctSection )
         {
-
-            /*
-               only create approve event when Akismet does recognize the published content as spam
-            */
-            if ( !eZAkismetType::isSpam( $object, $versionID ) )
-            {
-                return EZ_WORKFLOW_TYPE_STATUS_ACCEPTED;
-            }
-
-            /* Get user IDs from approve user groups */
-            $ini = eZINI::instance();
-            $userClassIDArray = array( $ini->variable( 'UserSettings', 'UserClassID' ) );
-            $approveUserIDArray = array();
-            foreach( $approveGroups as $approveUserGroupID )
-            {
-                if (  $approveUserGroupID != false )
-                {
-                    $approveUserGroup = eZContentObject::fetch( $approveUserGroupID );
-                    if ( isset( $approveUserGroup ) )
-                        foreach( $approveUserGroup->attribute( 'assigned_nodes' ) as $assignedNode )
-                        {
-                            $userNodeArray =& $assignedNode->subTree( array( 'ClassFilterType' => 'include',
-                                                                             'ClassFilterArray' => $userClassIDArray,
-                                                                             'Limitation' => array() ) );
-                            foreach( $userNodeArray as $userNode )
-                            {
-                                $approveUserIDArray[] = $userNode->attribute( 'contentobject_id' );
-                            }
-                        }
-                }
-            }
-            $approveUserIDArray = array_merge( $approveUserIDArray, $editors );
-            $approveUserIDArray = array_unique( $approveUserIDArray );
-
             $collaborationID = false;
-            $db = & eZDb::instance();
+            $db = & eZDB::instance();
             $taskResult = $db->arrayQuery( 'select workflow_process_id, collaboration_id from ezapprove_items where workflow_process_id = ' . $process->attribute( 'id' )  );
             if ( count( $taskResult ) > 0 )
                 $collaborationID = $taskResult[0]['collaboration_id'];
@@ -162,6 +129,49 @@ class eZAkismetType extends eZApproveType
             eZDebugSetting::writeDebug( 'kernel-workflow-approve', $process->attribute( 'event_state'), 'approve $process->attribute( \'event_state\')' );
             if ( $collaborationID === false )
             {
+                /*
+                  only create approve event when Akismet does recognize the published content as spam
+                */
+                if ( !eZAkismetType::isSpam( $object, $versionID ) )
+                {
+                    eZAudit::writeAudit( 'akismet', array( 'Action' => 'not recognized as spam',
+                                                           'Object' => $object->attribute( 'id' ),
+                                                           'Version' => $versionID ) );
+
+                    return EZ_WORKFLOW_TYPE_STATUS_ACCEPTED;
+                }
+
+                eZAudit::writeAudit( 'akismet', array( 'Action' => 'recognized as spam',
+                                                       'Object' => $object->attribute( 'id' ),
+                                                       'Version' => $versionID ) );
+
+                /* Get user IDs from approve user groups */
+                $ini = eZINI::instance();
+                $userClassIDArray = array( $ini->variable( 'UserSettings', 'UserClassID' ) );
+                $approveUserIDArray = array();
+                foreach( $approveGroups as $approveUserGroupID )
+                {
+                    if (  $approveUserGroupID != false )
+                    {
+                        $approveUserGroup = eZContentObject::fetch( $approveUserGroupID );
+                        if ( isset( $approveUserGroup ) )
+                        {
+                            foreach( $approveUserGroup->attribute( 'assigned_nodes' ) as $assignedNode )
+                            {
+                                $userNodeArray =& $assignedNode->subTree( array( 'ClassFilterType' => 'include',
+                                                                                     'ClassFilterArray' => $userClassIDArray,
+                                                                                     'Limitation' => array() ) );
+                                foreach( $userNodeArray as $userNode )
+                                {
+                                   $approveUserIDArray[] = $userNode->attribute( 'contentobject_id' );
+                                }
+                            }
+                        }
+                    }
+                }
+                $approveUserIDArray = array_merge( $approveUserIDArray, $editors );
+                $approveUserIDArray = array_unique( $approveUserIDArray );
+
                 $this->createApproveCollaboration( $process, $event, $user->id(), $object->attribute( 'id' ), $versionID, $approveUserIDArray );
                 $this->setInformation( "We are going to create approval" );
                 $process->setAttribute( 'event_state', EZ_APPROVE_COLLABORATION_CREATED );
@@ -184,6 +194,9 @@ class eZAkismetType extends eZApproveType
                 $workflowStatus = $this->checkApproveCollaboration(  $process, $event );
                 if ( $workflowStatus == EZ_WORKFLOW_TYPE_STATUS_ACCEPTED )
                 {
+                    eZAudit::writeAudit( 'akismet', array( 'Action' => 'submitting ham',
+                                         'Object' => $object->attribute( 'id' ),
+                                         'Version' => $versionID ) );
                     $this->submitHam( $object, $versionID );
                 }
 
