@@ -59,9 +59,9 @@ class eZAkismetType extends eZApproveType
 
         $userGroups = array_merge( $user->attribute( 'groups' ), array( $user->attribute( 'contentobject_id' ) ) );
         $workflowSections = explode( ',', $event->attribute( 'data_text1' ) );
-        $workflowGroups = explode( ',', $event->attribute( 'data_text2' ) );
-        $editors = explode( ',', $event->attribute( 'data_text3' ) ); //$event->attribute( 'data_int1' );
-        $approveGroups = explode( ',', $event->attribute( 'data_text4' ) );
+        $workflowGroups = $event->attribute( 'data_text2' ) == '' ? array() : explode( ',', $event->attribute( 'data_text2' ) );
+        $editors =        $event->attribute( 'data_text3' ) == '' ? array() : explode( ',', $event->attribute( 'data_text3' ) );
+        $approveGroups =  $event->attribute( 'data_text4' ) == '' ? array() : explode( ',', $event->attribute( 'data_text4' ) );
         $languageMask = $event->attribute( 'data_int2' );
 
         eZDebugSetting::writeDebug( 'kernel-workflow-approve', $user, 'eZAkismetType::execute::user' );
