@@ -1,4 +1,4 @@
-<?php /*
+<?php /* #?ini charset="utf-8"?
 
 #This only works if you have an api, get it at: http://akismet.com/personal/
 [AccountSettings]
