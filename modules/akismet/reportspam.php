@@ -1,7 +1,10 @@
 <?php
 
+include_once('autoload.php');
+
 $Module =& $Params['Module'];
 $Offset = $Params['Offset'];
+$response = array();
 
 if ( $Offset )
 {
@@ -24,7 +27,6 @@ else
 
 $viewParameters = array( 'offset' => $Offset );
 $viewParameters = array_merge( $viewParameters, $UserParameters );
-
 $limit = 20;
 
 $objectIDList = array();
@@ -40,31 +42,27 @@ if ( $Module->hasActionParameter( 'ObjectIDList' ) )
             $object = eZContentObject::fetch( $objectID );
             $version = $object->attribute( 'current' );
 
-            include_once( 'extension/akismet/classes/ezcontentobjectakismet.php' );
-            $infoExtractor = eZContentObjectAkismet::getInfoExtractor( $version );
-            if ( $infoExtractor )
+	    $akismetObject = new eZContentObjectAkismet();
+            $comment = $akismetObject->akismetInformationExtractor( $version );
+            
+            if ( $comment )
             {
-                $comment = $infoExtractor->getCommentArray();
-
                 eZDebug::writeDebug( $comment );
-
-                include_once( 'extension/akismet/classes/ezakismet.php' );
-                $akismet = new eZAkismet( $comment );
-
-                if ( !$akismet->errorsExist() )
+                $akismet = new eZAkismet( $comment ); 
+                if ( $akismet )
                 {
-                    $response = $akismet->submitSpam();
-                    eZDebug::writeNotice( $response, 'Akismet web service response' );
+                    $feedback = $akismet->submitSpam();
+                    $response[] = $feedback[1];
                 }
                 else
                 {
-                   eZDebug::writeWarning( 'An error has occured, unable to submit spam to Akismet.' );
+                   $response[] = ezi18n( 'extension/contactivity/akismet/submit', "An error has occured, unable to submit spam to Akismet." );
                 }
 
             }
             else
             {
-                eZDebug::writeDebug( 'Unable to find Akismet info extractor' );
+                  $response[] = ezi18n( 'extension/contactivity/akismet/submit', "An error has occured, unable to submit spam to Akismet." );
             }
         }
     }
@@ -76,7 +74,7 @@ if ( $Module->hasActionParameter( 'ObjectIDList' ) )
 
            if ( !$object->attribute( 'can_remove' ) )
            {
-               eZDebug::writeWarning( 'You are not allowed to remove the content object ' . $object->attribute( 'name' ) );
+               $response[] = ezi18n( 'extension/contactivity/akismet/submit', "You are not allowed to remove this content object." );
                continue;
            }
 
@@ -109,25 +107,24 @@ if ( $Module->hasActionParameter( 'ObjectIDList' ) )
     }
 }
 
-include_once( 'extension/akismet/classes/ezcontentobjectakismet.php' );
-
-$extractableNodes = eZContentObjectAkismet::getExtractableNodes( $limit, $Offset );
-$extractableNodesCount = eZContentObjectAkismet::getExtractableNodesCount();
+$akismet=new eZContentObjectAkismet();
+$extractableNodes = $akismet->getExtractableNodes( $limit, $Offset );
+$extractableNodesCount = $akismet->getExtractableNodesCount();
 
 include_once( 'kernel/common/template.php' );
-$tpl =& templateInit();
-
+$tpl = templateInit();
 $tpl->setVariable( 'object_id_list', $objectIDList );
 $tpl->setVariable( 'view_parameters', $viewParameters );
 $tpl->setVariable( 'nodes', $extractableNodes );
 $tpl->setVariable( 'nodes_count', $extractableNodesCount );
 $tpl->setVariable( 'limit', $limit );
+$tpl->setVariable( 'feedback', $response );
 
 $Result = array();
 $Result['content'] = $tpl->fetch( 'design:akismet/submit.tpl' );
 $Result['path'] = array(
     array( 'url' => false, 'text' => 'Akismet' ),
-    array( 'url' => false, 'text' => 'Submit spam' )
+    array( 'url' => false, 'text' => 'Report spam' )
 );
 
 ?>

@@ -1,14 +1,37 @@
 <?php
 
-function akismet_ContentActionHandler( &$module, &$http, &$objectID )
+// SOFTWARE NAME: Akismet extension
+// Based on the Akismet extension by Kristof Coomans for eZ publish 3.x 
+// SOFTWARE RELEASE: 1.0-0
+// COPYRIGHT NOTICE: Copyright (C) 2009-2010 Contactivity
+// SOFTWARE LICENSE: GNU General Public License v1.0
+// NOTICE: >
+
+//   This program is free software; you can redistribute it and/or
+//   modify it under the terms of version 2.0  of the GNU General
+//   Public License as published by the Free Software Foundation.
+//
+//   This program is distributed in the hope that it will be useful,
+//   but WITHOUT ANY WARRANTY; without even the implied warranty of
+//   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//   GNU General Public License for more details.
+//
+//   You should have received a copy of version 2.0 of the GNU General
+//   Public License along with this program; if not, write to the Free
+//   Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+//   MA 02110-1301, USA.
+//
+//
+
+include_once( 'autoload.php' );
+
+function akismet_ContentActionHandler( $module, $http, $objectID )
 {
     $object = eZContentObject::fetch( $objectID );
     $version = $object->attribute( 'current' );
     if ( $http->hasPostVariable( 'AkismetSubmitSpam' ) )
     {
-        include_once( 'kernel/classes/datatypes/ezuser/ezuser.php' );
         $user = eZUser::currentUser();
-
         $accessResult = $user->hasAccessTo( 'akismet', 'submit' );
 
         if ( $accessResult['accessWord'] === 'yes' )
@@ -16,32 +39,27 @@ function akismet_ContentActionHandler( &$module, &$http, &$objectID )
             $mainNode = $object->attribute( 'main_node' );
             $module->redirectTo( $mainNode->attribute( 'url_alias' ) );
 
-            include_once( 'extension/akismet/classes/ezcontentobjectakismet.php' );
-            $infoExtractor = eZContentObjectAkismet::getInfoExtractor( $version );
-            if ( $infoExtractor )
+            
+            $akismetObject = new eZContentObjectAkismet();
+            $comment = $akismetObject->akismetInformationExtractor( $version );
+            
+            if ( $comment)
             {
-                $comment = $infoExtractor->getCommentArray();
-
-                include_once( 'extension/akismet/classes/ezakismet.php' );
                 $akismet = new eZAkismet( $comment );
-
-                if ( !$akismet->errorsExist() )
+                if ( $akismet )
                 {
-                    $response = $akismet->submitSpam();
-                    $debug = eZDebug::instance();
-                    $debug->writeNotice( $response, 'Akismet web service response' );
+                    $feedback = $akismet->submitSpam();
+                    $response[] = $feedback[1];
                 }
                 else
                 {
-                   $debug = eZDebug::instance();
-                   $debug->writeWarning( 'An error has occured, unable to submit spam to Akismet.' );
+                    $response[] = ezi18n( 'extension/contactivity/akismet/submit', "An error has occured, unable to submit spam to Akismet." );
                 }
 
             }
             else
             {
-                $debug = eZDebug::instance();
-                $debug->writeDebug( 'Unable to find Akismet info extractor' );
+                 $response[] = ezi18n( 'extension/contactivity/akismet/submit', "An error has occured, unable to submit spam to Akismet." );
             }
         }
 

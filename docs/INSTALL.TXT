@@ -1,0 +1,39 @@
+AKISMET EXTENSION
+------------------
+
+INSTALLATION INSTRUCTIONS
+-------------------------
+If you're experiencing problems installing, configuring, or using this extension and require professional support, please contact: info@contactivity.com
+
+The akismet extension is meant to provide spam protection in cases where content objects (comments, trackback, etc) can be added by visitors.
+
+
+1. Unzip the files, copy them to the "extension/" directory of eZ Publish;
+
+2. Activate the extension in the admin interface;
+
+3. Modify the akismet.ini.append.php file:
+	1. Get api key at: http://akismet.com/personal/, and add it to the APIKey setting;
+	2. Define your BlogURL;
+	3. Define all classes that should make use of the Akismet service in the InformationExtractorSettings setting;
+	4. Map 'author','email', 'website' and 'body' to the content class attribute identifiers of the classes above. 
+	   
+	   The format is:
+	   
+	   [classIdentifier_AkismetSettings]
+	   AuthorAttribute=classAttributeIdentifier
+	   
+	   for example:
+	   
+	   [comment_AkismetSettings]
+	   AuthorAttribute=author
+
+4. Create a workflow with the " Event / Akismet Spam filter" event, called by the 'publish/before' trigger.
+
+
+
+LINKS
+-------------------------
+The back-end is available at: /akismet/reportspam
+
+

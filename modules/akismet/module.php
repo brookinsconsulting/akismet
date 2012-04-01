@@ -3,8 +3,8 @@
 $Module = array( 'name' => 'Akismet', 'variable_params' => false, 'ui_component_match' => 'module' );
 
 $ViewList = array();
-$ViewList['submit'] = array(
-    'script' => 'submit.php',
+$ViewList['reportspam'] = array(
+    'script' => 'reportspam.php',
     'functions' => array( 'submit' ),
     'unordered_params' => array( 'offset' => 'Offset' ),
     'single_post_actions' => array(
